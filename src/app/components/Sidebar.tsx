@@ -3,7 +3,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { HamburguerSVG } from '@/app/svg/svgs'
+import { HamburguerSVG } from '@/app/components/svgs'
 import Logo from '/Blue-logo-png.png'
 
 export default function Sidebar({}) {

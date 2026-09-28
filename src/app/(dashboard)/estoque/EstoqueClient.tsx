@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import DeleteProductModel from '../components/DeleteProductModel'
+import DeleteProductModel from '../../components/DeleteProductModel'
 import AddProductModel from '@/app/components/AddProductModel'
 import EditProductModel from '@/app/components/EditProductModel'
 import { NewProduct, Product } from '@/types/Product'
