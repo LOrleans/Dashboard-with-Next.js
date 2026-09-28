@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { loginUser } from '@/actions/auth'
+import { signIn } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -12,27 +12,21 @@ export default function LoginPage({}) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  async function handleLoginUser(e: React.FormEvent) {
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
 
-    if(!email || !password) {
-      setError("Todos os campos são obrigatórios.")
+    const result = await signIn('credentials', {
+      email,
+      password,
+      redirect: false
+    })
+    
+    if(result?.error){
+      setError('Email ou senha incorretos.')
       setLoading(false)
-      return;
-    }
-
-    const response = await loginUser({ email, password})
-    if(!response.success) {
-      setError(response.error || "Erro ao fazer login")
-      setLoading(false)
-      return;
-    }
-
-    if(response.success){
-      setError('')
-      setLoading(false)
+    } else {
       router.push('/estoque')
     }
   }
@@ -56,7 +50,7 @@ export default function LoginPage({}) {
         </div>
       )}
 
-      <form onSubmit={handleLoginUser} className='space-y-4 w-full'>
+      <form onSubmit={handleLogin} className='space-y-4 w-full'>
         <div>
           <label className='block text-sm font-medium text-gray-700 mb-1'>Email</label>
           <input 
