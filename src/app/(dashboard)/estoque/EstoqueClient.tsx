@@ -7,10 +7,11 @@ import { NewProduct, Product } from '@/types/Product'
 import { createProduct, updateProduct, deleteProduct, getProductsByCategory } from '@/actions/products'
 
 interface EstoqueClientProps {
-  initialProducts: Product[],
+  initialProducts: Product[];
+  defaultCategory: string;
 }
 
-export default function EstoqueClient({initialProducts}: EstoqueClientProps) {
+export default function EstoqueClient({initialProducts, defaultCategory}: EstoqueClientProps) {
   // Estados dos modais
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -18,7 +19,7 @@ export default function EstoqueClient({initialProducts}: EstoqueClientProps) {
   // Estados dos dados
   const [products, setProducts] = useState<Product[]>(initialProducts)
   const [productId, setProductId] = useState<number | null>(null)
-  const [activeCategory, setActiveCategory] = useState('Supermercado')
+  const [activeCategory, setActiveCategory] = useState(defaultCategory)
   const [updateProductsList, setUpdateProductsList] = useState(false)
 
 
@@ -37,17 +38,14 @@ export default function EstoqueClient({initialProducts}: EstoqueClientProps) {
     }
   }
 
-  // Renderizar apenas os produtos da categoria ativa
-  useEffect(() => {
-    filteredProducts();
-  }, [activeCategory])
+  async function handleCategoryChange(category: string) {
+    setActiveCategory(category);
+    const response = await getProductsByCategory(category);
+    if (response.success && response.data) {
+      setProducts(response.data)
+    }
+  }
 
-  // Atualizar a lista de produtos quando o usuário adicionar ou editar ou deletar um produto
-  useEffect(() => {
-    filteredProducts();
-    setUpdateProductsList(false);
-  }, [updateProductsList])
-  
   // Funções de manipulação dos dados
   async function handleAddProduct(newProduct: NewProduct) {
     const response = await createProduct({ ...newProduct, category: newProduct.category || activeCategory});
@@ -101,7 +99,7 @@ export default function EstoqueClient({initialProducts}: EstoqueClientProps) {
       <div className='flex justify-between items-center mb-6'>
         <h1 className='text-2xl font-semibold text-gray-800'>Controle de Estoque</h1>
         <button 
-          className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 hover:cursor-pointer'
+          className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors hover:cursor-pointer'
           onClick={() => setIsModalOpen(true)}
         >
           + Adicionar Item
@@ -113,7 +111,7 @@ export default function EstoqueClient({initialProducts}: EstoqueClientProps) {
         {categories.map(category => (
           <button 
             key={category}
-            onClick={() => setActiveCategory(category)}
+            onClick={() => handleCategoryChange(category)}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors 
               ${activeCategory === category ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
           >

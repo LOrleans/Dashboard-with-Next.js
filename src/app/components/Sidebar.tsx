@@ -50,7 +50,7 @@ export default function Sidebar({}) {
             <Link 
               href='/home'
               className={`
-                ${pathname === `/` ? 'bg-blue-700 text-white' : 'hover:bg-blue-600 text-blue-100'}
+                ${pathname === `/home` ? 'bg-blue-700 text-white' : 'hover:bg-blue-600 text-blue-100'}
                 block p-3 rounded-lg transition-colors
               `}
             >
@@ -66,6 +66,28 @@ export default function Sidebar({}) {
               `}
             >
               Estoque
+            </Link>
+          </li>
+          <li>
+            <Link   
+              href='/financeiro' 
+              className={`
+                ${pathname === `/financeiro` ? 'bg-blue-700 text-white' : 'hover:bg-blue-600 text-blue-100'}
+                block p-3 rounded-lg transition-colors
+              `}
+            >
+              Financeiro
+            </Link>
+          </li>
+          <li>
+            <Link 
+              href='/localizacao' 
+              className={`
+                ${pathname === `/localizacao` ? 'bg-blue-700 text-white' : 'hover:bg-blue-600 text-blue-100'}
+                block p-3 rounded-lg transition-colors
+              `}
+            >
+              Localização
             </Link>
           </li>
         </ul>
