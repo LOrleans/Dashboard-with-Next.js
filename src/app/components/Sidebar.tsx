@@ -48,7 +48,7 @@ export default function Sidebar({}) {
         <ul className='space-y-2 mt-8 font-medium text-base'>
           <li>
             <Link 
-              href='/'
+              href='/home'
               className={`
                 ${pathname === `/` ? 'bg-blue-700 text-white' : 'hover:bg-blue-600 text-blue-100'}
                 block p-3 rounded-lg transition-colors
