@@ -1,9 +1,14 @@
 import "./globals.css";
+import { NextAuthProvider } from "@/providers/NextAuthProvider";
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="pt-br">
-      <body>{children}</body>
+      <body>
+        <NextAuthProvider>
+          {children}
+        </NextAuthProvider>
+      </body>
     </html>
   );
 }

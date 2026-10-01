@@ -17,13 +17,27 @@ export async function getProducts() {
   }
 }
 
+export async function getProductsByCategory(category: string){
+  try {
+    const products = await prisma.product.findMany({
+      where: { category: category },
+      orderBy: { name: 'asc' }
+    })
+    return { success: true, data: products }
+  } catch (error) {
+    return { success: false, error: "Erro ao buscar produtos" }
+  }
+}
+
 export async function createProduct(data: NewProduct) {
   try {
     const newProduct = await prisma.product.create({
       data: {
         name: data.name,
         quantity: data.quantity,
-        price: data.price,
+        category: data.category,
+        unitMeasure: data.unitMeasure,
+        validationDate: data.validationDate,
       }
     })
 
@@ -47,7 +61,9 @@ export async function updateProduct(product: Product) {
       data: {
         name: product.name,
         quantity: product.quantity,
-        price: product.price,
+        category: product.category,
+        unitMeasure: product.unitMeasure,
+        validationDate: product.validationDate,
       }
     })
     revalidatePath('/estoque')

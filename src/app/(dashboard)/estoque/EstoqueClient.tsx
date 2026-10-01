@@ -1,14 +1,13 @@
 'use client'
-import { useState } from 'react'
-import DeleteProductModel from '../../components/DeleteProductModel'
-import AddProductModel from '@/app/components/AddProductModel'
-import EditProductModel from '@/app/components/EditProductModel'
+import { useEffect, useState } from 'react'
+import DeleteProductModel from '@/app/components/Products/DeleteProductModel'
+import AddProductModel from '@/app/components/Products/AddProductModel'
+import EditProductModel from '@/app/components/Products/EditProductModel'
 import { NewProduct, Product } from '@/types/Product'
-import { createProduct, updateProduct, deleteProduct } from '@/actions/products'
-import { tableHeaders } from '@/lib/estoque'
+import { createProduct, updateProduct, deleteProduct, getProductsByCategory } from '@/actions/products'
 
 interface EstoqueClientProps {
-  initialProducts: Product[];
+  initialProducts: Product[],
 }
 
 export default function EstoqueClient({initialProducts}: EstoqueClientProps) {
@@ -19,21 +18,64 @@ export default function EstoqueClient({initialProducts}: EstoqueClientProps) {
   // Estados dos dados
   const [products, setProducts] = useState<Product[]>(initialProducts)
   const [productId, setProductId] = useState<number | null>(null)
+  const [activeCategory, setActiveCategory] = useState('Supermercado')
+  const [updateProductsList, setUpdateProductsList] = useState(false)
+
 
   // Estado do produto selecionado
   const selectedProduct = products.find(prod => prod.id === productId) ?? null
+
+  // Categorias para o seletor
+  const categories = ['Supermercado', 'Farmácia', 'Limpeza', 'Higiene', 'Outros']
+  
+  // Filtrar os produtos pela categoria ativa
+  // const filteredProducts = products.filter(product => product.category === activeCategory);
+  async function filteredProducts() {
+    const response = await getProductsByCategory(activeCategory);
+    if(response.success && response.data){
+      setProducts(response.data)
+    }
+  }
+
+  // Renderizar apenas os produtos da categoria ativa
+  useEffect(() => {
+    filteredProducts();
+  }, [activeCategory])
+
+  // Atualizar a lista de produtos quando o usuário adicionar ou editar ou deletar um produto
+  useEffect(() => {
+    filteredProducts();
+    setUpdateProductsList(false);
+  }, [updateProductsList])
   
   // Funções de manipulação dos dados
   async function handleAddProduct(newProduct: NewProduct) {
-    const response = await createProduct(newProduct);
+    const response = await createProduct({ ...newProduct, category: newProduct.category || activeCategory});
 
     if(response.success && response.product){
-      setProducts([...products, response.product])  
+      setProducts([...products, response.product as Product])  
+      setUpdateProductsList(true)
       setIsModalOpen(false)
       return;
     } else {
       alert('Erro ao salvar o produto no banco de dados.') // Criar modal de error
       setIsModalOpen(false)
+      return;
+    }
+  }
+
+  async function handleEditProduct(editedProduct: Product) {
+    const response = await updateProduct(editedProduct);
+
+    if(response.success && response.product){
+      const updatedProducts = products.map(product => product.id === editedProduct.id ? editedProduct : product)
+      setProducts(updatedProducts)
+      setUpdateProductsList(true)
+      setIsEditModalOpen(false)
+      return;
+    } else {  
+      alert('Erro ao editar o produto no banco de dados.') // Criar modal de error
+      setIsEditModalOpen(false)
       return;
     }
   }
@@ -53,13 +95,6 @@ export default function EstoqueClient({initialProducts}: EstoqueClientProps) {
     }
   }
 
-  function handleEditProduct(editedProduct: Product) {
-    const updatedProducts = products.map(product => product.id === editedProduct.id ? editedProduct : product)
-    setProducts(updatedProducts)
-    setIsEditModalOpen(false)
-    setProductId(null)
-  }
-
   return (
     <div className="p-6 bg-white rounded-2xl shadow-lg h-full flex flex-col">
       {/* Header */}
@@ -69,32 +104,50 @@ export default function EstoqueClient({initialProducts}: EstoqueClientProps) {
           className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 hover:cursor-pointer'
           onClick={() => setIsModalOpen(true)}
         >
-          + Adicionar Produto
+          + Adicionar Item
         </button>
       </div>
+
+      {/* Seletor de Categorias */}
+      <div className='flex flex-wrap gap-2 mb-6 border-b border-gray-200 pb-4'>
+        {categories.map(category => (
+          <button 
+            key={category}
+            onClick={() => setActiveCategory(category)}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors 
+              ${activeCategory === category ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
+          >
+            {category}
+          </button>
+        ))}
+      </div>
+
       {/* Tabela */}
       <div className='overflow-x-auto'>
         <table className='w-full text-left border-collapse'>
           <thead>
             <tr>
-              <th className='p-4 border-b border-gray-300'>ID</th>
-              <th className='p-4 border-b border-gray-300'>Nome</th>
+              <th className='p-4 border-b border-gray-300'>Item</th>
               <th className='p-4 border-b border-gray-300'>Quantidade</th>
-              <th className='p-4 border-b border-gray-300'>Preço</th>
+              <th className='p-4 border-b border-gray-300'>Data de Validade</th>
               <th className='p-4 border-b border-gray-300'>Ações</th>
             </tr>
           </thead>
           <tbody>
-            {products.map(product => (
-              <tr key={product.id}>
-                <td className='p-4 border-b border-gray-200'>{product.id}</td>
+            {products.length === 0 ? (
+              <tr>
+                <td className='p-4 border-b border-gray-200'>Nenhum produto encontrado</td>
+              </tr>
+            ) : (
+              products.map((product, index) => (
+              <tr key={product.id} className={index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}>
                 <td className='p-4 border-b border-gray-200'>{product.name}</td>
-                <td className='p-4 border-b border-gray-200'>{product.quantity}</td>
-                <td className='p-4 border-b border-gray-200'>{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}</td>
+                <td className='p-4 border-b border-gray-200'>{product.quantity} {product.unitMeasure === 'kg' ? 'Kg' : product.unitMeasure === 'cx' ? 'Caixa' : product.unitMeasure === 'pct' ? 'Pacotes' : 'Unidade'}</td>
+                <td className='p-4 border-b border-gray-200'>{product.validationDate?.toLocaleDateString('pt-BR') ?? '—'}</td>
                 <td className='p-4 border-b border-gray-200'>
                   <div className='flex gap-2 my-1'>
                     <button 
-                      className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg'
+                      className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg hover:cursor-pointer'
                       onClick={() => {
                         setProductId(product.id)
                         setIsEditModalOpen(true)
@@ -103,7 +156,7 @@ export default function EstoqueClient({initialProducts}: EstoqueClientProps) {
                       Editar
                     </button>
                     <button 
-                      className='bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg'
+                      className='bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg hover:cursor-pointer'
                       onClick={() => {
                         setProductId(product.id)
                         setIsConfirmDeleteProdutoModalOpen(true)
@@ -114,7 +167,7 @@ export default function EstoqueClient({initialProducts}: EstoqueClientProps) {
                   </div>
                 </td>
               </tr>
-            ))}
+            )))}
           </tbody>
         </table>
       </div>

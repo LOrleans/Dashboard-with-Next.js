@@ -1,4 +1,4 @@
-import { getProducts} from '@/actions/products'
+import { getProducts } from '@/actions/products'
 import EstoqueClient from './EstoqueClient'
 
 export default async function EstoquePage(){
@@ -6,5 +6,5 @@ export default async function EstoquePage(){
   const productsDB = await getProducts();
 
   // Entrega os dados prontos para a interface interativa
-  return <EstoqueClient initialProducts={productsDB} />
+  return <EstoqueClient initialProducts={productsDB}/>
 }
