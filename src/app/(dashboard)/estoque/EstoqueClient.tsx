@@ -1,10 +1,11 @@
 'use client'
 import { useEffect, useState } from 'react'
-import DeleteProductModel from '@/app/components/Products/DeleteProductModel'
-import AddProductModel from '@/app/components/Products/AddProductModel'
-import EditProductModel from '@/app/components/Products/EditProductModel'
+import DeleteProductModel from '@/app/components/Models/DeleteProductModel'
+import AddProductModel from '@/app/components/Models/AddProductModel'
+import EditProductModel from '@/app/components/Models/EditProductModel'
 import { NewProduct, Product } from '@/types/Product'
 import { createProduct, updateProduct, deleteProduct, getProductsByCategory } from '@/actions/products'
+import { Pen, Trash } from 'lucide-react'
 
 interface EstoqueClientProps {
   initialProducts: Product[];
@@ -22,22 +23,13 @@ export default function EstoqueClient({initialProducts, defaultCategory}: Estoqu
   const [activeCategory, setActiveCategory] = useState(defaultCategory)
   const [updateProductsList, setUpdateProductsList] = useState(false)
 
-
   // Estado do produto selecionado
   const selectedProduct = products.find(prod => prod.id === productId) ?? null
 
   // Categorias para o seletor
   const categories = ['Supermercado', 'Farmácia', 'Limpeza', 'Higiene', 'Outros']
-  
-  // Filtrar os produtos pela categoria ativa
-  // const filteredProducts = products.filter(product => product.category === activeCategory);
-  async function filteredProducts() {
-    const response = await getProductsByCategory(activeCategory);
-    if(response.success && response.data){
-      setProducts(response.data)
-    }
-  }
 
+  // Filtra os produtos pela categoria ativa
   async function handleCategoryChange(category: string) {
     setActiveCategory(category);
     const response = await getProductsByCategory(category);
@@ -61,7 +53,6 @@ export default function EstoqueClient({initialProducts, defaultCategory}: Estoqu
       return;
     }
   }
-
   async function handleEditProduct(editedProduct: Product) {
     const response = await updateProduct(editedProduct);
 
@@ -77,7 +68,6 @@ export default function EstoqueClient({initialProducts, defaultCategory}: Estoqu
       return;
     }
   }
-
   async function handleDeleteProduct(id: number | null) {
     if(id === null) return;
     const response = await deleteProduct(id) 
@@ -94,10 +84,11 @@ export default function EstoqueClient({initialProducts, defaultCategory}: Estoqu
   }
 
   return (
-    <div className="p-6 bg-white rounded-2xl shadow-lg h-full flex flex-col">
+    <div className="p-4 md:p-6 bg-white rounded-2xl shadow-lg h-full flex flex-col">
+      
       {/* Header */}
-      <div className='flex justify-between items-center mb-6'>
-        <h1 className='text-2xl font-semibold text-gray-800'>Controle de Estoque</h1>
+      <div className='flex flex-col md:flex-row justify-between items-center mb-6 gap-4'>
+        <h1 className='text-2xl font-bold text-gray-800'>Controle de Estoque</h1>
         <button 
           className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors hover:cursor-pointer'
           onClick={() => setIsModalOpen(true)}
@@ -107,9 +98,9 @@ export default function EstoqueClient({initialProducts, defaultCategory}: Estoqu
       </div>
 
       {/* Seletor de Categorias */}
-      <div className='flex flex-wrap gap-2 mb-6 border-b border-gray-200 pb-4'>
+      <div className='flex flex-wrap justify-center md:justify-start gap-2 mb-6 border-b border-gray-200 pb-4'>
         {categories.map(category => (
-          <button 
+          <button
             key={category}
             onClick={() => handleCategoryChange(category)}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors 
@@ -141,17 +132,17 @@ export default function EstoqueClient({initialProducts, defaultCategory}: Estoqu
               <tr key={product.id} className={index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}>
                 <td className='p-4 border-b border-gray-200'>{product.name}</td>
                 <td className='p-4 border-b border-gray-200'>{product.quantity} {product.unitMeasure === 'kg' ? 'Kg' : product.unitMeasure === 'cx' ? 'Caixa' : product.unitMeasure === 'pct' ? 'Pacotes' : 'Unidade'}</td>
-                <td className='p-4 border-b border-gray-200'>{product.validationDate?.toLocaleDateString('pt-BR') ?? '—'}</td>
+                <td className='p-4 border-b border-gray-200'>{product.validationDate?.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }) ?? '—'}</td> {/* Exibir apenas mês e ano, se existir a data. */}  
                 <td className='p-4 border-b border-gray-200'>
                   <div className='flex gap-2 my-1'>
-                    <button 
+                    <button
                       className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg hover:cursor-pointer'
                       onClick={() => {
                         setProductId(product.id)
                         setIsEditModalOpen(true)
                       }}
                     >
-                      Editar
+                      <Pen size={18} className='text-white'/>
                     </button>
                     <button 
                       className='bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg hover:cursor-pointer'
@@ -160,7 +151,7 @@ export default function EstoqueClient({initialProducts, defaultCategory}: Estoqu
                         setIsConfirmDeleteProdutoModalOpen(true)
                       }}
                     >
-                      Deletar
+                      <Trash size={18} className='text-white'/>
                     </button>
                   </div>
                 </td>

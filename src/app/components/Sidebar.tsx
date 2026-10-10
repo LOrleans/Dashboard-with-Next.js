@@ -10,20 +10,10 @@ import { LogOut } from 'lucide-react'
 
 export default function Sidebar({}) {
   const { data: session, status } = useSession();
-  const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
   return (
-    <>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`
-          md:hidden fixed top-4 left-4 z-50 p-2 bg-blue-700 rounded-md text-white shadow-md
-          ${isOpen ? 'px-4' : ''}  
-        `}
-      >
-        {isOpen ? 'X' : HamburguerSVG}
-      </button>
+    <aside className='hidden md:flex flex-col w-64 blue-600 text-white font-bold text-xl rounded-2xl p-4 shadow-lg h-full'>
       <div className={`
         /* Cores, bordas e padding */
         flex flex-col w-64 px-4 pb-6 pt-16 md:py-6 rounded-2xl shadow-lg bg-blue-500 text-white font-bold text-xl
@@ -31,8 +21,6 @@ export default function Sidebar({}) {
         fixed z-40 inset-y-4 left-4 transition-transform duration-300
         /* Desktop */
         md:static md:inset-auto md:h-full 
-        /* Lógica condicional */
-        ${isOpen ? 'translate-x-0' : 'translate-x-[-120%]'} md:translate-x-0
       `}>
         <div className='flex items-center gap-3 mb-8 px-2'>
           <div className='shrink-0 p-1 px-4 rounded-lg'>
@@ -90,6 +78,17 @@ export default function Sidebar({}) {
               Localização
             </Link>
           </li>
+          <li>
+            <Link 
+              href='/configuracoes' 
+              className={`
+                ${pathname === `/configuracoes` ? 'bg-blue-700 text-white' : 'hover:bg-blue-600 text-blue-100'}
+                block p-3 rounded-lg transition-colors
+              `}
+            >
+              Configurações
+            </Link>
+          </li>
         </ul>
 
         {/* Área do Usuário e Botão de Logout*/} 
@@ -111,6 +110,6 @@ export default function Sidebar({}) {
           </button>
         </div>
       </div>
-    </>
+    </aside>
   );
 }
