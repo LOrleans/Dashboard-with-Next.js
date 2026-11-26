@@ -1,15 +1,19 @@
 # 📦 Dashboard de Estoque — Next.js + Prisma + PostgreSQL
 
-Um dashboard moderno de gerenciamento de estoque construído com **Next.js 16**, **Prisma ORM** e **PostgreSQL**. Permite realizar operações completas de CRUD (criar, ler, editar e excluir) em produtos, com dados persistidos em banco de dados relacional.
+Um dashboard de gerenciamento de estoque construído com **Next.js 16**, **Prisma ORM** e **PostgreSQL**. Tem cadastro e login de usuários e operações completas de CRUD (criar, ler, editar e excluir) em produtos, com dados persistidos em banco de dados relacional.
+
+> **Status:** em desenvolvimento. O fluxo de autenticação e o CRUD de estoque estão funcionando. As páginas **Home**, **Financeiro** e **Localização** ainda são placeholders, e a estilização mobile está em andamento.
 
 ## ✨ Funcionalidades
 
-- 📋 **Listagem de produtos** com nome, quantidade e preço
-- ➕ **Cadastro de novos produtos** via modal
+- 🔐 **Cadastro e login** de usuários, com senhas protegidas por hash (bcrypt) e sessão via JWT (NextAuth)
+- 🛡️ **Rota `/estoque` protegida**: usuários não autenticados são redirecionados para `/login`
+- 📋 **Listagem de produtos** com nome, quantidade (com unidade de medida) e data de validade
+- 🗂️ **Filtro por categoria** (Supermercado, Farmácia, Limpeza, Higiene e Outros)
+- ➕ **Cadastro de produtos** via modal, com categoria, subcategoria, unidade de medida e validade
 - ✏️ **Edição de produtos** existentes
 - 🗑️ **Exclusão de produtos** com confirmação
 - ⚡ **Server Actions** do Next.js para comunicação direta com o banco
-- 🔄 **Revalidação automática** de cache após cada operação
 
 ## 🛠️ Stack Tecnológica
 
@@ -17,8 +21,10 @@ Um dashboard moderno de gerenciamento de estoque construído com **Next.js 16**,
 |---|---|---|
 | [Next.js](https://nextjs.org/) | 16.x | Framework React fullstack |
 | [React](https://react.dev/) | 19.x | Biblioteca de UI |
-| [Prisma ORM](https://www.prisma.io/) | 6.x | Acesso ao banco de dados |
+| [Prisma ORM](https://www.prisma.io/) | 6.x | Acesso ao banco de dados e migrations |
 | [PostgreSQL](https://www.postgresql.org/) | 14+ | Banco de dados relacional |
+| [NextAuth.js](https://next-auth.js.org/) | 4.x | Autenticação (credenciais + JWT) |
+| [bcryptjs](https://github.com/dcodeIO/bcrypt.js) | 3.x | Hash de senhas |
 | [TypeScript](https://www.typescriptlang.org/) | 5.x | Tipagem estática |
 | [Tailwind CSS](https://tailwindcss.com/) | 4.x | Estilização |
 
@@ -27,8 +33,6 @@ Um dashboard moderno de gerenciamento de estoque construído com **Next.js 16**,
 ## 🚀 Como rodar o projeto localmente
 
 ### Pré-requisitos
-
-Certifique-se de ter instalado em sua máquina:
 
 - [Node.js](https://nodejs.org/) **v18 ou superior**
 - [npm](https://www.npmjs.com/) (já incluso no Node.js)
@@ -43,19 +47,15 @@ git clone https://github.com/LOrleans/Dashboard-with-Next.js.git
 cd Dashboard-with-Next.js
 ```
 
----
-
 ### 2. Instale as dependências
 
 ```bash
 npm install
 ```
 
----
-
 ### 3. Configure as variáveis de ambiente
 
-Crie um arquivo `.env` na raiz do projeto:
+Copie o arquivo de exemplo (o `.env` real nunca deve ser versionado):
 
 ```bash
 # No Linux/macOS
@@ -65,41 +65,21 @@ cp .env.example .env
 Copy-Item .env.example .env
 ```
 
-> **Nota:** Se não houver um `.env.example`, crie o arquivo `.env` manualmente.
+Abra o `.env` e preencha:
 
-Abra o `.env` e preencha com as suas credenciais do PostgreSQL:
-
-```env
-DATABASE_URL="postgresql://USUARIO:SENHA@localhost:5432/NOME_DO_BANCO?schema=public"
-```
-
-**Substitua os valores:**
-
-| Placeholder | Descrição | Exemplo |
+| Variável | Descrição | Exemplo |
 |---|---|---|
-| `USUARIO` | Usuário do PostgreSQL | `postgres` |
-| `SENHA` | Senha do usuário | `minhasenha123` |
-| `localhost` | Host do banco | `localhost` ou IP remoto |
-| `5432` | Porta padrão do PostgreSQL | `5432` |
-| `NOME_DO_BANCO` | Nome do banco de dados | `estoque_db` |
+| `DATABASE_URL` | String de conexão do PostgreSQL | `postgresql://USUARIO:SENHA@localhost:5432/estoque_db?schema=public` |
+| `NEXTAUTH_SECRET` | Chave usada para assinar a sessão (JWT). Gere uma aleatória | `openssl rand -base64 32` |
+| `NEXTAUTH_URL` | URL pública da aplicação. Necessária em produção | `http://localhost:3000` |
 
-**Exemplo completo:**
+Para gerar o `NEXTAUTH_SECRET` sem o `openssl` (por exemplo no Windows):
 
-```env
-DATABASE_URL="postgresql://postgres:minhasenha123@localhost:5432/estoque_db?schema=public"
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```
-
----
 
 ### 4. Crie o banco de dados no PostgreSQL
-
-Se ainda não criou o banco de dados, conecte-se ao PostgreSQL e execute:
-
-```sql
-CREATE DATABASE estoque_db;
-```
-
-Você pode fazer isso via terminal:
 
 ```bash
 # Conecta ao PostgreSQL como superusuário
@@ -110,21 +90,15 @@ CREATE DATABASE estoque_db;
 \q
 ```
 
----
-
 ### 5. Execute as migrations do Prisma
-
-Aplique o schema do banco de dados com o comando:
 
 ```bash
 npx prisma migrate deploy
 ```
 
-Isso criará automaticamente a tabela `Product` no seu banco com a estrutura correta.
+Isso cria as tabelas `Product` e `User` no seu banco.
 
-> **Alternativa (em desenvolvimento):** Use `npx prisma migrate dev` para criar e aplicar novas migrations interativamente.
-
----
+> **Alternativa (em desenvolvimento):** use `npx prisma migrate dev` para criar e aplicar novas migrations interativamente.
 
 ### 6. Gere o Prisma Client
 
@@ -132,9 +106,7 @@ Isso criará automaticamente a tabela `Product` no seu banco com a estrutura cor
 npx prisma generate
 ```
 
-> ⚠️ **Importante:** Este passo é necessário caso o `npm install` não tenha gerado automaticamente o client. Sem ele, a aplicação não consegue se comunicar com o banco.
-
----
+> ⚠️ Este passo é necessário caso o `npm install` não tenha gerado o client automaticamente. Sem ele, a aplicação não consegue se comunicar com o banco.
 
 ### 7. Inicie o servidor de desenvolvimento
 
@@ -142,34 +114,36 @@ npx prisma generate
 npm run dev
 ```
 
-Acesse [http://localhost:3000](http://localhost:3000) no seu navegador.
-
-A página de estoque está disponível em: [http://localhost:3000/estoque](http://localhost:3000/estoque)
+Acesse [http://localhost:3000](http://localhost:3000). Crie uma conta em `/cadastro`, faça login em `/login` e abra a página de estoque em `/estoque`.
 
 ---
 
 ## 📁 Estrutura do Projeto
 
 ```
-next-app/
+.
 ├── prisma/
-│   ├── schema.prisma          # Definição dos modelos do banco de dados
-│   └── migrations/            # Histórico de migrations SQL
+│   ├── schema.prisma               # Modelos do banco de dados
+│   └── migrations/                 # Histórico de migrations SQL
 ├── src/
 │   ├── actions/
-│   │   └── products.ts        # Server Actions — CRUD de produtos
+│   │   ├── auth.ts                 # Server Actions — cadastro e login
+│   │   └── products.ts             # Server Actions — CRUD de produtos
 │   ├── app/
-│   │   ├── estoque/
-│   │   │   ├── page.tsx       # Página de estoque (Server Component)
-│   │   │   └── EstoqueClient.tsx # Componente interativo do estoque
-│   │   ├── layout.tsx         # Layout principal da aplicação
-│   │   └── globals.css        # Estilos globais
+│   │   ├── (auth)/                 # Páginas /login e /cadastro
+│   │   ├── (dashboard)/            # Páginas /home, /estoque, /financeiro e /localizacao
+│   │   ├── api/auth/[...nextauth]/ # Rota do NextAuth
+│   │   ├── components/             # Sidebar, barras mobile e modais de produto
+│   │   ├── layout.tsx              # Layout principal
+│   │   └── globals.css             # Estilos globais
 │   ├── lib/
-│   │   ├── prisma.ts          # Singleton do Prisma Client
-│   │   └── estoque.ts         # Funções auxiliares de estoque
-│   └── types/
-│       └── Product.ts         # Tipos TypeScript dos produtos
-├── .env                       # Variáveis de ambiente (não comitar!)
+│   │   └── prisma.ts               # Singleton do Prisma Client
+│   ├── providers/
+│   │   └── NextAuthProvider.tsx    # Provider de sessão
+│   ├── types/
+│   │   └── Product.ts              # Tipos dos produtos
+│   └── proxy.ts                    # Protege a rota /estoque
+├── .env.example                    # Modelo das variáveis de ambiente
 ├── package.json
 └── tsconfig.json
 ```
@@ -185,7 +159,20 @@ next-app/
 | `id` | `Int` (autoincrement) | Identificador único |
 | `name` | `String` | Nome do produto |
 | `quantity` | `Int` | Quantidade em estoque |
-| `price` | `Float` | Preço unitário |
+| `category` | `String` | Categoria do produto |
+| `unitMeasure` | `String?` | Unidade de medida (kg, caixa, pacote ou unidade) |
+| `validationDate` | `DateTime?` | Data de validade (mês e ano) |
+| `createdAt` | `DateTime` | Data de criação |
+| `updatedAt` | `DateTime` | Data da última atualização |
+
+### Tabela `User`
+
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `id` | `Int` (autoincrement) | Identificador único |
+| `name` | `String` | Nome do usuário |
+| `email` | `String` (único) | E-mail usado no login |
+| `password` | `String` | Hash bcrypt da senha |
 | `createdAt` | `DateTime` | Data de criação |
 | `updatedAt` | `DateTime` | Data da última atualização |
 
@@ -208,7 +195,7 @@ next-app/
 ## 🐛 Solução de Problemas
 
 **Erro: `Can't reach database server`**
-- Verifique se o PostgreSQL está rodando: `pg_ctl status` ou verifique o serviço no seu sistema.
+- Verifique se o PostgreSQL está rodando: `pg_ctl status` ou o serviço no seu sistema.
 - Confirme se as credenciais na `DATABASE_URL` estão corretas.
 
 **Erro: `PrismaClientInitializationError`**
@@ -216,6 +203,9 @@ next-app/
 
 **Erro: `relation "Product" does not exist`**
 - Execute `npx prisma migrate deploy` para aplicar as migrations pendentes.
+
+**Login não funciona ou a sessão cai**
+- Confirme que o `NEXTAUTH_SECRET` está definido no `.env` e reinicie o servidor.
 
 **Porta 3000 já em uso**
 - Use uma porta diferente: `npm run dev -- -p 3001`
